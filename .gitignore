@@ -1,3 +1,6 @@
+/datasets/labels/train.txt
+#/.idea/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
