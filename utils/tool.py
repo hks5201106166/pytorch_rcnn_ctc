@@ -18,6 +18,8 @@ def get_logger(save_outputs):
     return logger
 def get_output_dir():
     t = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+    if not os.path.exists('save_outputs'):
+        os.makedirs('save_outputs')
     log_path = 'save_outputs/'
     save_outputs=log_path+t
     os.mkdir(save_outputs)
