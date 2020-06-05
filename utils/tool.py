@@ -16,16 +16,16 @@ def get_logger(save_outputs):
     fh.setLevel(logging.DEBUG)
     logger.addHandler(fh)
     return logger
-def get_output_dir():
+def get_output_dir(blank=''):
     t = strftime("%Y-%m-%d %H:%M:%S", gmtime())
     if not os.path.exists('save_outputs'):
         os.makedirs('save_outputs')
     log_path = 'save_outputs/'
     save_outputs=log_path+t
-    os.mkdir(save_outputs)
-    os.mkdir(save_outputs+'/log')
-    os.mkdir(save_outputs+'/models_saved')
-    return t
+    os.mkdir(save_outputs+'_'+blank)
+    os.mkdir(save_outputs+'_'+blank+'/log')
+    os.mkdir(save_outputs+'_'+blank+'/models_saved')
+    return t+'_'+blank
 class LabelTool(object):
     def __init__(self,char_std_path):
         with open(char_std_path,'rb') as file:
