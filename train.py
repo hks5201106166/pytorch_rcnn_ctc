@@ -11,6 +11,7 @@ from easydict import EasyDict as edict
 import yaml
 import argparse
 import os
+from torchvision.models.resnet  import resnet18
 def config_args():
     parser = argparse.ArgumentParser()
     # the config for the train
