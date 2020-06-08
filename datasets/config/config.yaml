@@ -31,6 +31,6 @@ MODEL:
   NAME: 'crnn_ctc'
   BACKBONE: 'resnet18'#['resnet18','resnet34','resnet50','resnet101','resnet152']
   NUM_CLASSES: 6736
-  LSTM_NUM_LAYER: 2
-  LSTM_NUM_HIDDEN: 256
+  LSTM_NUM_LAYER: 1
+  LSTM_NUM_HIDDEN: 128
 

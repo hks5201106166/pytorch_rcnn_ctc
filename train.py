@@ -22,7 +22,7 @@ def config_args():
         config=edict(config)
     return config
 def main():
-    save_outputs=get_output_dir()
+    save_outputs=get_output_dir('dev_lstm_1layer_128')
     logger=get_logger(save_outputs)
     config=config_args()
     transform_train=\
