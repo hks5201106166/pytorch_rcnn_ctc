@@ -5,6 +5,9 @@ import torch.nn.functional as F
 from .cnn.resnet import *
 from .cnn.densenet import *
 class CRNN(nn.Module):
+    '''
+    the model of the crnn
+    '''
     def __init__(self,config):
         super(CRNN, self).__init__()
         if config.MODEL.BACKBONE   == 'resnet18':

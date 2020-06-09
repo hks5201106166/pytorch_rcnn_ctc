@@ -8,12 +8,25 @@ import PIL.Image as Image
 from tqdm import tqdm
 
 class Dataset_OCR(Dataset):
+    '''
+    define the dataset for rcnn models
+    '''
     def __init__(self, images_root_dir,images_name, transform=None):
+        '''
+        define the dataset
+        @param images_root_dir: the images root
+        @param images_name: the images name of the dataset
+        @param transform: the transform for the images
+        '''
         self.images_root_dir = images_root_dir
         self.transform = transform
         self.images_name=images_name
 
-    def __len__(self):  # 返回整个数据集的大小
+    def __len__(self):
+        '''
+        the len of the dataset
+        @return:
+        '''
         return len(self.images_name)
 
     def __getitem__(self, index):
@@ -21,5 +34,5 @@ class Dataset_OCR(Dataset):
         img_path = os.path.join(self.images_root_dir, image_index)
         img=Image.open(img_path)
         if self.transform:
-            img = self.transform(img)  # 对样本进行变换
-        return img,index # 返回该样本
+            img = self.transform(img)  # transform the image
+        return img,index

@@ -6,7 +6,13 @@ import torch
 import logging
 from time import gmtime, strftime
 import os
+from tqdm import tqdm
+from tqdm._tqdm import trange
+
 class Avgloss():
+    '''
+    the average of the loss
+    '''
     def __init__(self):
         self.loss_all=0
         self.step=0
@@ -14,6 +20,10 @@ class Avgloss():
         average_loss=self.loss_all/self.step
         return average_loss
 def get_logger(save_outputs):
+    """
+    @param save_outputs:the log and model save dir
+    @return:
+    """
     t = save_outputs
     log_path = 'save_outputs/'+t+'/log/'
     logger = logging.getLogger()
@@ -24,6 +34,10 @@ def get_logger(save_outputs):
     logger.addHandler(fh)
     return logger
 def get_output_dir(blank=''):
+    """
+    @param blank: make the dir for the save_outputs
+    @return: the dir for the save_outputs
+    """
     t = strftime("%Y-%m-%d %H:%M:%S", gmtime())
     if not os.path.exists('save_outputs'):
         os.makedirs('save_outputs')
@@ -34,7 +48,13 @@ def get_output_dir(blank=''):
     os.mkdir(save_outputs+'_'+blank+'/models_saved')
     return t+'_'+blank
 class LabelTool(object):
+    """
+    the tool for label,including encode,decode,cal_correct_nums .ect
+    """
     def __init__(self,char_std_path):
+        '''
+        @param char_std_path: the char_std dict root
+        '''
         with open(char_std_path,'rb') as file:
             id_map_str = {}
             str_map_id={}
@@ -46,6 +66,10 @@ class LabelTool(object):
     def encode(self):
         pass
     def decode(self,output):
+        '''
+        @param output: one line words decode
+        @return: the str word
+        '''
         l=len(output)
         pred_str = []
         pred_str_blank=[]
@@ -56,11 +80,6 @@ class LabelTool(object):
                 pred_str_blank.append(self.id_map_str[output[i]])
             else:
                 pred_str_blank.append('_')
-
-        #for i in range(l):
-
-        #print(pred_str)
-        #print(pred_str1)
         return ''.join(pred_str),''.join(pred_str_blank)
     def decode_labels(self,target,target_lengths):
         target=target.numpy()
@@ -83,14 +102,26 @@ class LabelTool(object):
 
 
     def decode_batch(self,outputs):
+        '''
+
+        @param outputs: mutil line words decode
+        @return: the mutil line words
+        '''
         pred_strs=[]
-        pred_strs_blank=[]
         for output in outputs:
             pred_str,pred_str_blank=self.decode(list(output))
             pred_strs.append(pred_str)
-            pred_strs_blank.append(pred_str_blank)
-        return pred_strs,pred_strs_blank
-    def cal_correct_nums(self,pred_strs,preds_strs_val_blank,indexs,labels_train,step_val):
+
+        return pred_strs
+    def cal_correct_nums(self,pred_strs,indexs,labels_train,step_val):
+        '''
+        calculate the correct nums
+        @param pred_strs: the model pred_strs
+        @param indexs: the idexs of the labels
+        @param labels_train: the ground of the labels
+
+        @return:
+        '''
         indexs = indexs.numpy()
         N = indexs.shape[0]
         labels = labels_train[indexs]
@@ -102,6 +133,8 @@ class LabelTool(object):
         #print(labels_str)
         correct_nums=0
         for i in range(len(labels_str)):
+            if step_val==0:
+                print('{}     {}'.format(labels_str[i],pred_strs[i]))
             #print(labels_str[i])
             if pred_strs[i]==labels_str[i]:
                 correct_nums+=1
@@ -109,6 +142,11 @@ class LabelTool(object):
 
     @staticmethod
     def get_labels(labels_path):
+        '''
+        get the labels from  .txt
+        @param labels_path: the labels .txt file path
+        @return:
+        '''
         images_name = []
         labels = []
         print('generator the images_name and labels:')
@@ -125,6 +163,13 @@ class LabelTool(object):
             return images_name, np.array(labels)
 
     def convert_ctcloss_labels(self,indexs, labels_train_val,sequence_len):
+        '''
+        convert the labels format for the ctc loss
+        @param indexs: the indexs of the labels
+        @param labels_train_val: the labels ids for the ctc loss
+        @param sequence_len: the len of the labels
+        @return: labels_tensor, input_lengths, target_lengths
+        '''
         indexs = indexs.numpy()
         N = indexs.shape[0]
         labels = labels_train_val[indexs]
@@ -143,6 +188,21 @@ class LabelTool(object):
         target_lengths = torch.tensor(target_lengths, dtype=torch.int32)
         return labels_tensor, input_lengths, target_lengths
 def train_one_epoch(epoch,dataloader_train,config,model,label_tool, labels_train,criterion,avgloss,optimizer,scheduler,logger):
+    '''
+    train the model
+    @param epoch: the epoch for train
+    @param dataloader_train: the dataloader for the train
+    @param config:
+    @param model:
+    @param label_tool:
+    @param labels_train:
+    @param criterion:
+    @param avgloss:
+    @param optimizer:
+    @param scheduler:
+    @param logger:
+    @return: none
+    '''
     step_epoch = len(dataloader_train)
     for i, (images, indexs) in enumerate(dataloader_train):
         images = images.to(torch.device("cuda:" + config.CUDNN.GPU))
@@ -166,28 +226,46 @@ def train_one_epoch(epoch,dataloader_train,config,model,label_tool, labels_train
                 "epoch:{},step:{},loss={:.6f},loss_avarage={:.6f},lr={}".format(epoch, avgloss.step, loss, avgloss.loss_all/avgloss.step,
                                                                                 scheduler.get_lr()[0]))
 def validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,save_outputs,logger):
+    '''
+    validate the model
+    @param epoch:
+    @param dataloader_val:
+    @param labels_val:
+    @param config:
+    @param model:
+    @param label_tool:
+    @param criterion:
+    @param save_outputs:
+    @param logger:
+    @return: none
+    '''
+    print('validate the model,please hold on:')
     loss_all_val = 0
     step_val = 0
     nums_all = 0
     nums_all_correct = 0
-    for images_val, indexs_val in dataloader_val:
-        images_val = images_val.to(torch.device("cuda:" + config.CUDNN.GPU))
-        with torch.no_grad():
-            output_val = model(images_val)
-        sequence_len_val = output_val.shape[0]
-        target_val, input_lengths_val, target_lengths_val = label_tool.convert_ctcloss_labels(indexs_val,
-                                                                                              labels_val,
-                                                                                              sequence_len_val)
-        preds_val = output_val.permute(1, 0, 2).argmax(2).cpu().numpy()
-        preds_str_val, preds_str_val_blank = label_tool.decode_batch(preds_val)
-        correct_nums = label_tool.cal_correct_nums(preds_str_val, preds_str_val_blank, indexs_val, labels_val, step_val)
-        nums_all_correct += correct_nums
-        nums_all += output_val.shape[1]
-        print('nums_all_correct{},nums_all{}'.format(nums_all_correct, nums_all))
+    pbar = tqdm(total=100)
+    with torch.no_grad():
+        for index,(images_val, indexs_val) in enumerate(dataloader_val):
+            pbar.update(100/len(dataloader_val))
+            images_val = images_val.to(torch.device("cuda:" + config.CUDNN.GPU))
 
-        loss_val = criterion(output_val, target_val, input_lengths_val, target_lengths_val)
-        loss_all_val += loss_val
-        step_val += 1
+            output_val = model(images_val)
+            sequence_len_val = output_val.shape[0]
+            target_val, input_lengths_val, target_lengths_val = label_tool.convert_ctcloss_labels(indexs_val,
+                                                                                                  labels_val,
+                                                                                                  sequence_len_val)
+            preds_val = output_val.permute(1, 0, 2).argmax(2).cpu().numpy()
+            preds_str_val= label_tool.decode_batch(preds_val)
+            correct_nums = label_tool.cal_correct_nums(preds_str_val, indexs_val, labels_val,step_val)
+            nums_all_correct += correct_nums
+            nums_all += output_val.shape[1]
+            #print('nums_all_correct{},nums_all{}'.format(nums_all_correct, nums_all))
+
+            loss_val = criterion(output_val, target_val, input_lengths_val, target_lengths_val)
+            loss_all_val += loss_val
+            step_val += 1
+    pbar.close()
     acc = nums_all_correct / nums_all
     torch.save(
         {
@@ -196,8 +274,10 @@ def validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,s
             "acc": acc,
         }, os.path.join('save_outputs/' + save_outputs + '/models_saved/', "epoch_{}_acc_{:.4f}.pth".format(epoch, acc))
     )
+    print('......................................................................................')
     print("epoch:{},val_loss_avarage={},val_accuracy={}".format(epoch, loss_all_val / step_val,
                                                                 nums_all_correct / nums_all))
+    print('......................................................................................')
     logger.debug("epoch:{},val_loss_avarage={},val_accuracy={}".format(epoch, loss_all_val / step_val,
                                                                        nums_all_correct / nums_all))
 
