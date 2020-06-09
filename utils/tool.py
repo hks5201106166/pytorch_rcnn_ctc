@@ -6,6 +6,13 @@ import torch
 import logging
 from time import gmtime, strftime
 import os
+class avgloss(object):
+    def __init__(self):
+        self.loss_all=0
+        self.step=0
+    def print(self):
+        average_loss=self.loss_all/self.step
+        return average_loss
 def get_logger(save_outputs):
     t = save_outputs
     log_path = 'save_outputs/'+t+'/log/'
@@ -135,7 +142,10 @@ class LabelTool(object):
         input_lengths = torch.full(size=(N,), fill_value=sequence_len, dtype=torch.int32)
         target_lengths = torch.tensor(target_lengths, dtype=torch.int32)
         return labels_tensor, input_lengths, target_lengths
-
+def train_one_epoch():
+    pass
+def validate():
+    pass
 
 
 
