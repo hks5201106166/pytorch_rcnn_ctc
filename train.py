@@ -71,7 +71,9 @@ def main():
         #train_one_epoch(epoch,dataloader_train,config,model,label_tool, labels_train,criterion,avgloss,optimizer,scheduler,logger)
         #update the learn lr
         scheduler.step()
+
         #validate the rcnn models
+        print('validate the model,please hold on:')
         validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,save_outputs,logger)
 
 if __name__=='__main__':

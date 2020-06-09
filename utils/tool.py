@@ -133,8 +133,8 @@ class LabelTool(object):
         #print(labels_str)
         correct_nums=0
         for i in range(len(labels_str)):
-            if step_val==0:
-                print('{}     {}'.format(labels_str[i],pred_strs[i]))
+            # if step_val==0:
+            #     print('{}     {}'.format(labels_str[i],pred_strs[i]))
             #print(labels_str[i])
             if pred_strs[i]==labels_str[i]:
                 correct_nums+=1
@@ -239,7 +239,7 @@ def validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,s
     @param logger:
     @return: none
     '''
-    print('validate the model,please hold on:')
+
     loss_all_val = 0
     step_val = 0
     nums_all = 0
