@@ -6,7 +6,7 @@ import torch
 import logging
 from time import gmtime, strftime
 import os
-class avgloss(object):
+class Avgloss():
     def __init__(self):
         self.loss_all=0
         self.step=0
@@ -142,10 +142,65 @@ class LabelTool(object):
         input_lengths = torch.full(size=(N,), fill_value=sequence_len, dtype=torch.int32)
         target_lengths = torch.tensor(target_lengths, dtype=torch.int32)
         return labels_tensor, input_lengths, target_lengths
-def train_one_epoch():
-    pass
-def validate():
-    pass
+def train_one_epoch(epoch,dataloader_train,config,model,label_tool, labels_train,criterion,avgloss,optimizer,scheduler,logger):
+    step_epoch = len(dataloader_train)
+    for i, (images, indexs) in enumerate(dataloader_train):
+        images = images.to(torch.device("cuda:" + config.CUDNN.GPU))
+
+        output = model(images)
+        sequence_len = output.shape[0]
+        target, input_lengths, target_lengths = label_tool.convert_ctcloss_labels(indexs, labels_train, sequence_len)
+        loss = criterion(output.cpu(), target, input_lengths, target_lengths)
+        # loss_all+=loss.cpu().detach().numpy()
+        avgloss.loss_all += loss.item()
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        # print(scheduler.get_lr())
+        avgloss.step += 1
+        if avgloss.step % config.TRAIN.SHOW_STEP == 0:
+            print("epoch:{},step:{}/{},loss={:.6f},loss_avarage={:.6f},lr={}".format(epoch, avgloss.step, step_epoch, loss,
+                                                                                     avgloss.loss_all / avgloss.step,
+                                                                                     scheduler.get_lr()[0]))
+            logger.debug(
+                "epoch:{},step:{},loss={:.6f},loss_avarage={:.6f},lr={}".format(epoch, avgloss.step, loss, avgloss.loss_all/avgloss.step,
+                                                                                scheduler.get_lr()[0]))
+def validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,save_outputs,logger):
+    loss_all_val = 0
+    step_val = 0
+    nums_all = 0
+    nums_all_correct = 0
+    for images_val, indexs_val in dataloader_val:
+        images_val = images_val.to(torch.device("cuda:" + config.CUDNN.GPU))
+        with torch.no_grad():
+            output_val = model(images_val)
+        sequence_len_val = output_val.shape[0]
+        target_val, input_lengths_val, target_lengths_val = label_tool.convert_ctcloss_labels(indexs_val,
+                                                                                              labels_val,
+                                                                                              sequence_len_val)
+        preds_val = output_val.permute(1, 0, 2).argmax(2).cpu().numpy()
+        preds_str_val, preds_str_val_blank = label_tool.decode_batch(preds_val)
+        correct_nums = label_tool.cal_correct_nums(preds_str_val, preds_str_val_blank, indexs_val, labels_val, step_val)
+        nums_all_correct += correct_nums
+        nums_all += output_val.shape[1]
+        print('nums_all_correct{},nums_all{}'.format(nums_all_correct, nums_all))
+
+        loss_val = criterion(output_val, target_val, input_lengths_val, target_lengths_val)
+        loss_all_val += loss_val
+        step_val += 1
+    acc = nums_all_correct / nums_all
+    torch.save(
+        {
+            "state_dict": model.state_dict(),
+            "epoch": epoch + 1,
+            "acc": acc,
+        }, os.path.join('save_outputs/' + save_outputs + '/models_saved/', "epoch_{}_acc_{:.4f}.pth".format(epoch, acc))
+    )
+    print("epoch:{},val_loss_avarage={},val_accuracy={}".format(epoch, loss_all_val / step_val,
+                                                                nums_all_correct / nums_all))
+    logger.debug("epoch:{},val_loss_avarage={},val_accuracy={}".format(epoch, loss_all_val / step_val,
+                                                                       nums_all_correct / nums_all))
+
 
 
 

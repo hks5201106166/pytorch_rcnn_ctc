@@ -11,11 +11,11 @@ from easydict import EasyDict as edict
 import yaml
 import argparse
 import os
-
+from utils.tool import train_one_epoch,Avgloss,validate
 def config_args():
     parser = argparse.ArgumentParser()
     # the config for the train
-    parser.add_argument('--config',default='datasets/config/config.yaml',type=str,help='the path of the images dir')
+    parser.add_argument('--config',default='config/config.yaml',type=str,help='the path of the images dir')
     args = parser.parse_args()
     with open(args.config,'r') as file:
         config=yaml.load(file)
@@ -56,60 +56,11 @@ def main():
     dataloader_train=DataLoader(dataset=dataset_train,batch_size=config.TRAIN.BATCH,shuffle=config.TRAIN.SHUFFLE,num_workers=config.TRAIN.WORKERS)
     dataloader_val=DataLoader(dataset=dataset_val,batch_size=config.TEST.BATCH,shuffle=config.TEST.SHUFFLE,num_workers=config.TEST.WORKERS)
 
-    step=0
-    loss_all=0
-    step_epoch=len(dataloader_train)
+    avgloss=Avgloss()
     for epoch in range(config.TRAIN.EPOCH):
-        for i,(images,indexs) in enumerate(dataloader_train):
-            images=images.to(torch.device("cuda:"+config.CUDNN.GPU))
-
-            output=model(images)
-            sequence_len=output.shape[0]
-            target, input_lengths, target_lengths = label_tool.convert_ctcloss_labels(indexs, labels_train,sequence_len)
-            loss=criterion(output.cpu(),target,input_lengths,target_lengths)
-            #loss_all+=loss.cpu().detach().numpy()
-            loss_all += loss.item()
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            #print(scheduler.get_lr())
-            step+=1
-            if step%config.TRAIN.SHOW_STEP==0:
-                print("epoch:{},step:{}/{},loss={:.6f},loss_avarage={:.6f},lr={}".format(epoch,step,step_epoch,loss,loss_all/step,scheduler.get_lr()[0]))
-                logger.debug("epoch:{},step:{},loss={:.6f},loss_avarage={:.6f},lr={}".format(epoch,step,loss,loss_all/step,scheduler.get_lr()[0]))
+        train_one_epoch(epoch,dataloader_train,config,model,label_tool, labels_train,criterion,avgloss,optimizer,scheduler,logger)
         scheduler.step()
-        loss_all_val=0
-        step_val=0
-        nums_all=0
-        nums_all_correct=0
-        for images_val,indexs_val in dataloader_val:
-            images_val = images_val.to(torch.device("cuda:"+config.CUDNN.GPU))
-            with torch.no_grad():
-                output_val = model(images_val)
-            sequence_len_val = output_val.shape[0]
-            target_val, input_lengths_val, target_lengths_val = label_tool.convert_ctcloss_labels(indexs_val,
-                                                                                                  labels_val,
-                                                                                                  sequence_len_val)
-            preds_val = output_val.permute(1, 0, 2).argmax(2).cpu().numpy()
-            preds_str_val,preds_str_val_blank = label_tool.decode_batch(preds_val)
-            correct_nums = label_tool.cal_correct_nums(preds_str_val,preds_str_val_blank,indexs_val, labels_val,step_val)
-            nums_all_correct+=correct_nums
-            nums_all+=output_val.shape[1]
-            print('nums_all_correct{},nums_all{}'.format(nums_all_correct,nums_all))
-
-            loss_val = criterion(output_val, target_val, input_lengths_val, target_lengths_val)
-            loss_all_val += loss_val
-            step_val+=1
-        acc=nums_all_correct/nums_all
-        torch.save(
-            {
-                "state_dict": model.state_dict(),
-                "epoch": epoch + 1,
-                "acc": acc,
-            }, os.path.join('save_outputs/'+save_outputs+'/models_saved/', "epoch_{}_acc_{:.4f}.pth".format(epoch, acc))
-        )
-        print("epoch:{},val_loss_avarage={},val_accuracy={}".format(epoch,loss_all_val / step_val,nums_all_correct/nums_all))
-        logger.debug("epoch:{},val_loss_avarage={},val_accuracy={}".format(epoch,loss_all_val / step_val,nums_all_correct/nums_all))
+        validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,save_outputs,logger)
 
 if __name__=='__main__':
     main()
