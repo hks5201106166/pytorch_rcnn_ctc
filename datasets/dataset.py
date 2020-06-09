@@ -19,7 +19,7 @@ class Dataset_OCR(Dataset):
     def __getitem__(self, index):
         image_index = self.images_name[index]
         img_path = os.path.join(self.images_root_dir, image_index)
-        img=Image.open(img_path).convert('L')
+        img=Image.open(img_path)
         if self.transform:
             img = self.transform(img)  # 对样本进行变换
         return img,index # 返回该样本
