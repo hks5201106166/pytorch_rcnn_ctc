@@ -127,6 +127,9 @@ class LabelTool(object):
             for word in list(label):
                 labels_.append(self.str_map_id[word])
             target_lengths.append(len(list(label)))
+            if len(list(label))==0:
+                print('labels is lenght zeros')
+                break
 
         labels_tensor = torch.tensor(labels_, dtype=torch.int32)
         input_lengths = torch.full(size=(N,), fill_value=sequence_len, dtype=torch.int32)

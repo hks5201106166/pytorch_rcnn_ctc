@@ -7,7 +7,7 @@ DATASET:
     W: 160   # resized width: 160
   IMAGE_ROOT: "/home/simple/mydemo/ocr_project/id_datas/images/"
   CHAR_FILE: 'datasets/char_map/char_std_6736.txt'
-  LABELS_FILE: {'TRAIN': 'datasets/labels/test.txt',
+  LABELS_FILE: {'TRAIN': 'datasets/labels/train.txt',
               'VAL': 'datasets/labels/test.txt'}
 TRAIN:
   EPOCH: 40

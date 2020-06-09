@@ -58,8 +58,9 @@ def main():
 
     step=0
     loss_all=0
+    step_epoch=len(dataloader_train)
     for epoch in range(config.TRAIN.EPOCH):
-        for images,indexs in dataloader_train:
+        for i,(images,indexs) in enumerate(dataloader_train):
             images=images.to(torch.device("cuda:"+config.CUDNN.GPU))
 
             output=model(images)
@@ -74,8 +75,8 @@ def main():
             #print(scheduler.get_lr())
             step+=1
             if step%config.TRAIN.SHOW_STEP==0:
-                print("epoch:{},step:{},loss={},loss_avarage={},lr={}".format(epoch,step,loss,loss_all/step,scheduler.get_lr()[0]))
-                logger.debug("epoch:{},step:{},loss={},loss_avarage={},lr={}".format(epoch,step,loss,loss_all/step,scheduler.get_lr()[0]))
+                print("epoch:{},step:{}/{},loss={:.6f},loss_avarage={:.6f},lr={}".format(epoch,step,step_epoch,loss,loss_all/step,scheduler.get_lr()[0]))
+                logger.debug("epoch:{},step:{},loss={:.6f},loss_avarage={:.6f},lr={}".format(epoch,step,loss,loss_all/step,scheduler.get_lr()[0]))
         scheduler.step()
         loss_all_val=0
         step_val=0
