@@ -219,7 +219,7 @@ def train_one_epoch(epoch,dataloader_train,config,model,label_tool, labels_train
         # print(scheduler.get_lr())
         avgloss.step += 1
         if avgloss.step % config.TRAIN.SHOW_STEP == 0:
-            print("epoch:{},step:{}/{},loss={:.6f},loss_avarage={:.6f},lr={}".format(epoch, avgloss.step, step_epoch, loss,
+            print("epoch:{},step:({}/{}),loss={:.6f},loss_avarage={:.6f},lr={}".format(epoch, avgloss.step, step_epoch, loss,
                                                                                      avgloss.loss_all / avgloss.step,
                                                                                      scheduler.get_lr()[0]))
             logger.debug(
