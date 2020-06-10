@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as F
 from .cnn.resnet import *
 from .cnn.densenet import *
+from .cnn.mobilenet import *
 class CRNN(nn.Module):
     '''
     the model of the crnn
@@ -22,6 +23,8 @@ class CRNN(nn.Module):
             self.cnn = resnet152(config=config)
         elif config.MODEL.BACKBONE == 'densenet':
             self.cnn = densenet121(config=config)
+        elif config.MODEL.BACKBONE == 'mobilenet_v2':
+            self.cnn = mobilenet_v2(config=config)
         self.rnn=nn.LSTM(config.MODEL.LSTM_NUM_HIDDEN,config.MODEL.LSTM_NUM_HIDDEN,num_layers=config.MODEL.LSTM_NUM_LAYER,bidirectional=True)
         self.nclass=config.MODEL.NUM_CLASSES
         self.embeding=nn.Linear(config.MODEL.LSTM_NUM_HIDDEN*2,self.nclass)
