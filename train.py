@@ -26,7 +26,7 @@ def config_args():
     return config
 def main():
     config = config_args()
-    save_outputs=get_output_dir(config.MODEL.BACKBONE+'_'+'LSTM_NUM_LAYER:'+config.MODEL.LSTM_NUM_LAYER+'LSTM_NUM_HIDDEN:'+config.MODEL.config.MODEL)
+    save_outputs=get_output_dir(config.MODEL.BACKBONE+'_'+'lstm-layer:'+str(config.MODEL.LSTM_NUM_LAYER)+'_lstm-hidden-nums:'+str(config.MODEL.LSTM_NUM_HIDDEN))
     logger=get_logger(save_outputs)
     #define the train and val transform
     transform_train=\
