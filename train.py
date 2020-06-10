@@ -22,9 +22,9 @@ def config_args():
         config=edict(config)
     return config
 def main():
-    save_outputs=get_output_dir('dev_lstm_1layer_128')
+    config = config_args()
+    save_outputs=get_output_dir(config.MODEL.BACKBONE+'_'+'LSTM_NUM_LAYER:'+config.MODEL.LSTM_NUM_LAYER+'LSTM_NUM_HIDDEN:'+config.MODEL.config.MODEL)
     logger=get_logger(save_outputs)
-    config=config_args()
     transform_train=\
         transforms.Compose([
             transforms.Resize(size=(config.DATASET.IMAGE_SIZE.H,config.DATASET.IMAGE_SIZE.W)),
