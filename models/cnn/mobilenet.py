@@ -286,7 +286,7 @@ class MobileNetV3_Small(nn.Module):
         self.bn2 = nn.BatchNorm2d(576)
         self.hs2 = hswish()
         self.config=config
-
+        self.conv3 = nn.Conv2d(576, int(config.MODEL.LSTM_NUM_HIDDEN), kernel_size=1)
         # self.linear3 = nn.Linear(576, 1280)
         # self.bn3 = nn.BatchNorm1d(1280)
         # self.hs3 = hswish()
@@ -313,8 +313,6 @@ class MobileNetV3_Small(nn.Module):
         out = self.hs2(self.bn2(self.conv2(out)))
         if int(self.config.MODEL.LSTM_NUM_HIDDEN)!=576:
             self.conv3=nn.Conv2d(576,int(self.config.MODEL.LSTM_NUM_HIDDEN),kernel_size=1)
-        if int(self.config.MODEL.LSTM_NUM_HIDDEN) != 960:
-            out = self.conv3(out)
         out = out.squeeze()
         # out = F.avg_pool2d(out, 7)
         # out = out.view(out.size(0), -1)
