@@ -140,8 +140,7 @@ class LabelTool(object):
                 correct_nums+=1
         return correct_nums
 
-    @staticmethod
-    def get_labels(labels_path):
+    def get_labels(self,labels_path):
         '''
         get the labels from  .txt
         @param labels_path: the labels .txt file path
@@ -152,14 +151,18 @@ class LabelTool(object):
         print('generator the images_name and labels:')
         with open(labels_path, 'r') as files:
             lines = files.readlines()
+
             for index in tqdm(range(0, len(lines))):
+                len_label=0
                 file = lines[index]
                 image_name = file.split('jpg')[0] + 'jpg'
                 label = file.split('jpg')[1].strip()
-                images_name.append(image_name)
-                labels.append(label)
-                # if index%10000==0:
-                #     print(index)
+                for word in list(label):
+                    if word in self.str_map_id:
+                        len_label += 1
+                if len_label!=0:
+                    images_name.append(image_name)
+                    labels.append(label)
             return images_name, np.array(labels)
 
     def convert_ctcloss_labels(self,indexs, labels_train_val,sequence_len):
@@ -182,9 +185,9 @@ class LabelTool(object):
                     labels_.append(self.str_map_id[word])
                     len_label+=1
             target_lengths.append(len_label)
-            # if len_label==0:
-            #     print('labels is lenght zeros')
-            #     break
+            if len_label==0:
+                print('labels is lenght zeros')
+                break
 
         labels_tensor = torch.tensor(labels_, dtype=torch.int32)
         input_lengths = torch.full(size=(N,), fill_value=sequence_len, dtype=torch.int32)

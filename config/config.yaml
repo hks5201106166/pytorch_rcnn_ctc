@@ -19,7 +19,7 @@ TRAIN:
     MODEL_SAVE:
   OPTIMIZER: 'adam'
   LR: 0.0001
-  LR_STEP: [5, 30]
+  LR_STEP: [15, 30]
   LR_FACTOR: 0.1
   SHOW_STEP: 20
 
