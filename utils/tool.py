@@ -176,10 +176,13 @@ class LabelTool(object):
         labels_ = []
         target_lengths = []
         for label in labels:
+            len_label=0
             for word in list(label):
-                labels_.append(self.str_map_id[word])
-            target_lengths.append(len(list(label)))
-            if len(list(label))==0:
+                if word in self.str_map_id:
+                    labels_.append(self.str_map_id[word])
+                    len_label+=1
+            target_lengths.append(len_label)
+            if len_label==0:
                 print('labels is lenght zeros')
                 break
 

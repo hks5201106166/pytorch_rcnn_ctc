@@ -29,7 +29,7 @@ TEST:
   WORKERS: 8
 MODEL:
   NAME: 'crnn_ctc'
-  BACKBONE: 'mobileNet_v3_Small'#['resnet18','resnet34','resnet50','resnet101','resnet152','densenet','mobilenet_v2','mobileNet_v3_Large','mobileNet_v3_Small']
+  BACKBONE: 'densenet' #['resnet18','resnet34','resnet50','resnet101','resnet152','densenet','mobilenet_v2','mobileNet_v3_Large','mobileNet_v3_Small']
   NUM_CLASSES: 6736
   LSTM_NUM_LAYER: 2
   LSTM_NUM_HIDDEN: 576
