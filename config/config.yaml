@@ -15,11 +15,11 @@ TRAIN:
   SHUFFLE: True
   WORKERS: 0
   RESUME:
-    IS_RESUME: False
-    MODEL_SAVE:
+    IS_RESUME: True
+    MODEL_SAVE: '/home/ubuntu/hks/ocr/pytorch_rcnn_ctc/save_outputs/2020-06-11 03:18:31_mobilenet_v2_lstm-layer:2_lstm-hidden-nums:1280/models_saved/epoch_7_acc_0.9874.pth'
   OPTIMIZER: 'adam'
   LR: 0.0001
-  LR_STEP: [15, 30]
+  LR_STEP: [7, 15]
   LR_FACTOR: 0.1
   SHOW_STEP: 20
 
