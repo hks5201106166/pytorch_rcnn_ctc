@@ -192,14 +192,19 @@ class LabelTool(object):
         #indexs = indexs.numpy()
         N = len(indexs)
         target_lengths = []
+        labels_ = []
         for index in indexs:
             label = labels_train_val[index]
             texts=label[i]
-            labels_ = []
+
             len_label=0
             for word in texts:
+
+                #if word in self.str_map_id:
                 labels_.append(self.str_map_id[word])
                 len_label+=1
+                print(texts)
+                print(len(texts))
             target_lengths.append(len_label)
             if len_label==0:
                 print('labels is lenght zeros')
