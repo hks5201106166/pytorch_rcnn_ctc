@@ -8,7 +8,7 @@ from time import gmtime, strftime
 import os
 from tqdm import tqdm
 from tqdm._tqdm import trange
-
+import csv
 class Avgloss():
     '''
     the average of the loss
@@ -164,8 +164,24 @@ class LabelTool(object):
                     images_name.append(image_name)
                     labels.append(label)
             return images_name, np.array(labels)
+    def get_idcard_labels(self,labels_path):
+        '''
+        get the labels from  .txt
+        @param labels_path: the labels .txt file path
+        @return:
+        '''
 
-    def convert_ctcloss_labels(self,indexs, labels_train_val,sequence_len):
+        images_name = []
+        labels_dict={}
+        print('generator the images_name and labels:')
+        labels_csv = list(csv.reader(open(labels_path, 'r', encoding='UTF-8-sig')))
+        for label in labels_csv:
+            images_name.append(label[0])
+            labels_dict[label[0]] = label[1:]
+
+        return images_name,labels_dict
+
+    def convert_ctcloss_labels(self,indexs, labels_train_val,sequence_len,i):
         '''
         convert the labels format for the ctc loss
         @param indexs: the indexs of the labels
@@ -173,17 +189,17 @@ class LabelTool(object):
         @param sequence_len: the len of the labels
         @return: labels_tensor, input_lengths, target_lengths
         '''
-        indexs = indexs.numpy()
-        N = indexs.shape[0]
-        labels = labels_train_val[indexs]
-        labels_ = []
+        #indexs = indexs.numpy()
+        N = len(indexs)
         target_lengths = []
-        for label in labels:
+        for index in indexs:
+            label = labels_train_val[index]
+            texts=label[i]
+            labels_ = []
             len_label=0
-            for word in list(label):
-                if word in self.str_map_id:
-                    labels_.append(self.str_map_id[word])
-                    len_label+=1
+            for word in texts:
+                labels_.append(self.str_map_id[word])
+                len_label+=1
             target_lengths.append(len_label)
             if len_label==0:
                 print('labels is lenght zeros')
@@ -210,19 +226,33 @@ def train_one_epoch(epoch,dataloader_train,config,model,label_tool, labels_train
     @return: none
     '''
     step_epoch = len(dataloader_train)
-    avgloss.step=0
-    for i, (images, indexs) in enumerate(dataloader_train):
-        images = images.to(torch.device("cuda:" + config.CUDNN.GPU))
+    for i, (xingming_rect,dizhi_rect,xingbie_rect,mingzhu_rect,shengfengzhenghao_rect,chusheng_rect_year,chusheng_rect_month,chusheng_rect_day,qianfajiguang_rect,youxiaoqixian_rect,indexs) in enumerate(dataloader_train):
+        #images = images.to(torch.device("cuda:" + config.CUDNN.GPU))
+        xingming_rect=xingming_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+        dizhi_rect=dizhi_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+        xingbie_rect=xingbie_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+        mingzhu_rect=mingzhu_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+        shengfengzhenghao_rect=shengfengzhenghao_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+        chusheng_rect_year=shengfengzhenghao_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+        chusheng_rect_month=chusheng_rect_month.to(torch.device("cuda:" + config.CUDNN.GPU))
+        chusheng_rect_day=chusheng_rect_day.to(torch.device("cuda:" + config.CUDNN.GPU))
+        qianfajiguang_rect=qianfajiguang_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+        youxiaoqixian_rect=youxiaoqixian_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+        images=[xingming_rect,mingzhu_rect,xingbie_rect,chusheng_rect_year,chusheng_rect_month,chusheng_rect_day,dizhi_rect,shengfengzhenghao_rect,qianfajiguang_rect,youxiaoqixian_rect]
+        #np.random.shuffle(images)
 
-        output = model(images)
-        sequence_len = output.shape[0]
-        target, input_lengths, target_lengths = label_tool.convert_ctcloss_labels(indexs, labels_train, sequence_len)
-        loss = criterion(output.cpu(), target, input_lengths, target_lengths)
-        # loss_all+=loss.cpu().detach().numpy()
-        avgloss.loss_all += loss.item()
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+
+        for i,image in enumerate(images):
+            output = model(image)
+            sequence_len = output.shape[0]
+            target, input_lengths, target_lengths = label_tool.convert_ctcloss_labels(indexs, labels_train,
+                                                                                      sequence_len,i)
+            loss = criterion(output.cpu(), target, input_lengths, target_lengths)
+            # loss_all+=loss.cpu().detach().numpy()
+            avgloss.loss_all += loss.item()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
         # print(scheduler.get_lr())
         avgloss.step += 1
         if avgloss.step % config.TRAIN.SHOW_STEP == 0:
