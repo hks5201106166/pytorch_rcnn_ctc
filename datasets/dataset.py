@@ -6,7 +6,7 @@ from torchvision import transforms
 import numpy as np
 import PIL.Image as Image
 from tqdm import tqdm
-
+import cv2
 class Dataset_OCR(Dataset):
     '''
     define the dataset for rcnn models
@@ -32,7 +32,10 @@ class Dataset_OCR(Dataset):
     def __getitem__(self, index):
         image_index = self.images_name[index]
         img_path = os.path.join(self.images_root_dir, image_index)
+
         img=Image.open(img_path)
+        img=img.convert('L')
+        #print(img)
         if self.transform:
             img = self.transform(img)  # transform the image
         return img,index

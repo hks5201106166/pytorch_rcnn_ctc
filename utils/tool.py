@@ -210,6 +210,7 @@ def train_one_epoch(epoch,dataloader_train,config,model,label_tool, labels_train
     @return: none
     '''
     step_epoch = len(dataloader_train)
+    avgloss.step=0
     for i, (images, indexs) in enumerate(dataloader_train):
         images = images.to(torch.device("cuda:" + config.CUDNN.GPU))
 

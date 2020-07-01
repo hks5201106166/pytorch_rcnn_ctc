@@ -45,7 +45,18 @@ def main():
     #define the rcnn model
     model=crnn.CRNN(config).to(torch.device("cuda:"+config.CUDNN.GPU))
     if config.TRAIN.RESUME.IS_RESUME==True:
-        model.load_state_dict(torch.load(config.TRAIN.RESUME.MODEL_SAVE)['state_dict'])
+        print('model load .......................')
+        model_dict = model.state_dict()
+
+        pretrained_dict = torch.load(config.TRAIN.RESUME.MODEL_SAVE)['state_dict']
+
+        pretrained_dict = {k: v for k, v in pretrained_dict.items() if k not in ['embeding.weight','embeding.bias']}
+
+        model_dict.update(pretrained_dict)
+
+        model.load_state_dict(model_dict)
+
+        #model.load_state_dict(torch.load(config.TRAIN.RESUME.MODEL_SAVE)['state_dict'],strict=False)
 
     criterion = nn.CTCLoss()
     optimizer=torch.optim.Adam(model.parameters(),lr=config.TRAIN.LR)
