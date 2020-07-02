@@ -11,9 +11,9 @@ DATASET:
               'VAL': 'datasets/labels/test.txt'}
 TRAIN:
   EPOCH: 40
-  BATCH: 32
+  BATCH: 1
   SHUFFLE: True
-  WORKERS: 0
+  WORKERS: 8
   RESUME:
     IS_RESUME: True
     MODEL_SAVE: '/home/ubuntu/hks/ocr/pytorch_rcnn_ctc/save_outputs/2020-06-08 04:21:50_dev_lstm_2layer_256/models_saved/epoch_7_acc_0.9921.pth'

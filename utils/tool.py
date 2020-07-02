@@ -214,6 +214,8 @@ def train_one_epoch(epoch,dataloader_train,config,model,label_tool, labels_train
     for i, (images, indexs) in enumerate(dataloader_train):
         images = images.to(torch.device("cuda:" + config.CUDNN.GPU))
 
+
+
         output = model(images)
         sequence_len = output.shape[0]
         target, input_lengths, target_lengths = label_tool.convert_ctcloss_labels(indexs, labels_train, sequence_len)
