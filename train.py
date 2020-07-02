@@ -46,17 +46,17 @@ def main():
     model=crnn.CRNN(config).to(torch.device("cuda:"+config.CUDNN.GPU))
     if config.TRAIN.RESUME.IS_RESUME==True:
         print('model load .......................')
-        model_dict = model.state_dict()
+        # model_dict = model.state_dict()
+        #
+        # pretrained_dict = torch.load(config.TRAIN.RESUME.MODEL_SAVE)['state_dict']
+        #
+        # pretrained_dict = {k: v for k, v in pretrained_dict.items() if k not in ['embeding.weight','embeding.bias']}
+        #
+        # model_dict.update(pretrained_dict)
+        #
+        # model.load_state_dict(model_dict)
 
-        pretrained_dict = torch.load(config.TRAIN.RESUME.MODEL_SAVE)['state_dict']
-
-        pretrained_dict = {k: v for k, v in pretrained_dict.items() if k not in ['embeding.weight','embeding.bias']}
-
-        model_dict.update(pretrained_dict)
-
-        model.load_state_dict(model_dict)
-
-        #model.load_state_dict(torch.load(config.TRAIN.RESUME.MODEL_SAVE)['state_dict'],strict=False)
+        model.load_state_dict(torch.load(config.TRAIN.RESUME.MODEL_SAVE)['state_dict'],strict=False)
 
     criterion = nn.CTCLoss()
     optimizer=torch.optim.Adam(model.parameters(),lr=config.TRAIN.LR)
@@ -64,7 +64,7 @@ def main():
 
     #get the train and val lables from the train.txt and test.txt
     label_tool = LabelTool(char_std_path=config.DATASET.CHAR_FILE)
-    images_train,labels_train=label_tool.get_labels(labels_path=config.DATASET.LABELS_FILE.TRAIN)
+    images_train,labels_train=label_tool.get_labels(labels_path=config.DATASET.LABELS_FILE.VAL)
     images_val,labels_val=label_tool.get_labels(labels_path=config.DATASET.LABELS_FILE.VAL)
 
     #define the train and val dataset

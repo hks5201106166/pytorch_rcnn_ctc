@@ -138,6 +138,9 @@ class LabelTool(object):
             #print(labels_str[i])
             if pred_strs[i]==labels_str[i]:
                 correct_nums+=1
+            # else:
+            #     print('pred_strs:{}'.format(pred_strs[i]))
+            #     print('labels_str:{}'.format(labels_str[i]))
         return correct_nums
 
     def get_labels(self,labels_path):
@@ -157,12 +160,14 @@ class LabelTool(object):
                 file = lines[index]
                 image_name = file.split('jpg')[0] + 'jpg'
                 label = file.split('jpg')[1].strip()
+                label_in_the_dict=''
                 for word in list(label):
                     if word in self.str_map_id:
+                        label_in_the_dict+=word
                         len_label += 1
                 if len_label!=0:
                     images_name.append(image_name)
-                    labels.append(label)
+                    labels.append(label_in_the_dict)
             return images_name, np.array(labels)
 
     def convert_ctcloss_labels(self,indexs, labels_train_val,sequence_len):
@@ -269,7 +274,7 @@ def validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,s
             correct_nums = label_tool.cal_correct_nums(preds_str_val, indexs_val, labels_val,step_val)
             nums_all_correct += correct_nums
             nums_all += output_val.shape[1]
-            #print('nums_all_correct{},nums_all{}'.format(nums_all_correct, nums_all))
+            print('nums_all_correct{},nums_all{}'.format(nums_all_correct, nums_all))
 
             loss_val = criterion(output_val, target_val, input_lengths_val, target_lengths_val)
             loss_all_val += loss_val
