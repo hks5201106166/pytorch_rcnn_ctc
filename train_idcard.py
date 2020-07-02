@@ -92,7 +92,7 @@ def main():
         scheduler.step()
 
         #validate the rcnn models
-        print('validate the model,please hold on:')
+        # print('validate the model,please hold on:')
         validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,save_outputs,logger)
 
 if __name__=='__main__':

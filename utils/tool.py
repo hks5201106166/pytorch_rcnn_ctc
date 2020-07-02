@@ -113,7 +113,7 @@ class LabelTool(object):
             pred_strs.append(pred_str)
 
         return pred_strs
-    def cal_correct_nums(self,pred_strs,indexs,labels_train,step_val):
+    def cal_correct_nums(self,pred_strs,indexs,labels,step_val,i):
         '''
         calculate the correct nums
         @param pred_strs: the model pred_strs
@@ -122,23 +122,24 @@ class LabelTool(object):
 
         @return:
         '''
-        indexs = indexs.numpy()
-        N = indexs.shape[0]
-        labels = labels_train[indexs]
+
+        N = len(indexs)
+       # labels = labels_train[indexs]
        # print(labels)
-        labels_str=labels
+        labels_str=indexs
         # for label in labels:
         #     label_str,_=self.decode([int(word.strip()) for word in label.split(' ')])
         #     labels_str.append(label_str)
         #print(labels_str)
         correct_nums=0
-        for i in range(len(labels_str)):
-            # if step_val==0:
-            #     print('{}     {}'.format(labels_str[i],pred_strs[i]))
-            #print(labels_str[i])
-            if pred_strs[i]==labels_str[i]:
+        idcard_error=[]
+        for index,label_name in enumerate(labels_str):
+            label_ground_true=labels[label_name]
+            if pred_strs[index]==label_ground_true[i]:
                 correct_nums+=1
-        return correct_nums
+            else:
+                idcard_error.append(index)
+        return correct_nums,idcard_error
 
     def get_labels(self,labels_path):
         '''
@@ -174,7 +175,7 @@ class LabelTool(object):
         images_name = []
         labels_dict={}
         print('generator the images_name and labels:')
-        labels_csv = list(csv.reader(open(labels_path, 'r', encoding='UTF-8-sig')))
+        labels_csv = list(csv.reader(open(labels_path, 'r', encoding='utf-8-sig')))
         for label in labels_csv:
             images_name.append(label[0])
             labels_dict[label[0]] = label[1:]
@@ -198,13 +199,16 @@ class LabelTool(object):
             texts=label[i]
 
             len_label=0
-            for word in texts:
 
-                #if word in self.str_map_id:
-                labels_.append(self.str_map_id[word])
-                len_label+=1
-                print(texts)
-                print(len(texts))
+            for word in texts.strip():
+
+               # print(word)
+                if word in self.str_map_id:
+                    labels_.append(self.str_map_id[word])
+                    len_label+=1
+                # else:
+                #     print('the key {} is not in the dict'.format(word))
+
             target_lengths.append(len_label)
             if len_label==0:
                 print('labels is lenght zeros')
@@ -231,7 +235,7 @@ def train_one_epoch(epoch,dataloader_train,config,model,label_tool, labels_train
     @return: none
     '''
     step_epoch = len(dataloader_train)
-    for i, (xingming_rect,dizhi_rect,xingbie_rect,mingzhu_rect,shengfengzhenghao_rect,chusheng_rect_year,chusheng_rect_month,chusheng_rect_day,qianfajiguang_rect,youxiaoqixian_rect,indexs) in enumerate(dataloader_train):
+    for ind, (xingming_rect,dizhi_rect,xingbie_rect,mingzhu_rect,shengfengzhenghao_rect,chusheng_rect_year,chusheng_rect_month,chusheng_rect_day,qianfajiguang_rect,youxiaoqixian_rect,indexs) in enumerate(dataloader_train):
         #images = images.to(torch.device("cuda:" + config.CUDNN.GPU))
         xingming_rect=xingming_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
         dizhi_rect=dizhi_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
@@ -245,27 +249,39 @@ def train_one_epoch(epoch,dataloader_train,config,model,label_tool, labels_train
         youxiaoqixian_rect=youxiaoqixian_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
         images=[xingming_rect,mingzhu_rect,xingbie_rect,chusheng_rect_year,chusheng_rect_month,chusheng_rect_day,dizhi_rect,shengfengzhenghao_rect,qianfajiguang_rect,youxiaoqixian_rect]
         #np.random.shuffle(images)
-
-
+        loss_texts=0
+        loss_dict={}
+        rexts=['xingming','mingzhu','xingbie','chusheng_year',
+               'chusheng_month','chusheng_day','dizhi','shengfengzhenghao',
+               'qianfajiguang','youxiaoqixian']
         for i,image in enumerate(images):
             output = model(image)
             sequence_len = output.shape[0]
             target, input_lengths, target_lengths = label_tool.convert_ctcloss_labels(indexs, labels_train,
                                                                                       sequence_len,i)
             loss = criterion(output.cpu(), target, input_lengths, target_lengths)
+            loss_texts+=loss.item()
+            loss_dict[rexts[i]]=loss.item()
             # loss_all+=loss.cpu().detach().numpy()
             avgloss.loss_all += loss.item()
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            avgloss.step += 1
         # print(scheduler.get_lr())
-        avgloss.step += 1
+
         if avgloss.step % config.TRAIN.SHOW_STEP == 0:
-            print("epoch:{},step:({}/{}),loss={:.6f},loss_avarage={:.6f},lr={}".format(epoch, avgloss.step, step_epoch, loss,
-                                                                                     avgloss.loss_all / avgloss.step,
+            print("epoch:{},step:({}/{}),loss={:.6f},loss_avarage={:.6f},"
+                  "loss_xingming={:.6f},loss_mingzhu={:.6f},loss_xingbie={:.6f},"
+                  "loss_chusheng_year={:.6f},loss_chusheng_month={:.6f},loss_chusheng_day={:.6f},"
+                  "loss_dizhi={:.6f},loss_shengfengzhenghao={:.6f},loss_qianfajiguang={:.6f},"
+                  "loss_youxiaoqixian={:.6f},lr={}".format(epoch, avgloss.step, step_epoch, loss_texts/len(images),avgloss.loss_all / avgloss.step,
+                                                    loss_dict['xingming'],loss_dict['mingzhu'],loss_dict['xingbie'],loss_dict['chusheng_year'],
+                                                    loss_dict['chusheng_month'],loss_dict['chusheng_day'],loss_dict['dizhi'],loss_dict['shengfengzhenghao'],
+                                                    loss_dict['qianfajiguang'],loss_dict['youxiaoqixian'],
                                                                                      scheduler.get_lr()[0]))
             logger.debug(
-                "epoch:{},step:{},loss={:.6f},loss_avarage={:.6f},lr={}".format(epoch, avgloss.step, loss, avgloss.loss_all/avgloss.step,
+                "epoch:{},step:{},loss={:.6f},loss_avarage={:.6f},lr={}".format(epoch, avgloss.step,loss_texts/len(images), avgloss.loss_all/avgloss.step,
                                                                                 scheduler.get_lr()[0]))
 def validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,save_outputs,logger):
     '''
@@ -288,25 +304,50 @@ def validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,s
     nums_all_correct = 0
     pbar = tqdm(total=100)
     with torch.no_grad():
-        for index,(images_val, indexs_val) in enumerate(dataloader_val):
-            pbar.update(100/len(dataloader_val))
-            images_val = images_val.to(torch.device("cuda:" + config.CUDNN.GPU))
+        for i, (xingming_rect, dizhi_rect, xingbie_rect, mingzhu_rect, shengfengzhenghao_rect, chusheng_rect_year,
+                chusheng_rect_month, chusheng_rect_day, qianfajiguang_rect, youxiaoqixian_rect, indexs_val) in enumerate(
+                dataloader_val):
+            pbar.update(100 / len(dataloader_val))
+            # images = images.to(torch.device("cuda:" + config.CUDNN.GPU))
+            xingming_rect = xingming_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+            dizhi_rect = dizhi_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+            xingbie_rect = xingbie_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+            mingzhu_rect = mingzhu_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+            shengfengzhenghao_rect = shengfengzhenghao_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+            chusheng_rect_year = shengfengzhenghao_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+            chusheng_rect_month = chusheng_rect_month.to(torch.device("cuda:" + config.CUDNN.GPU))
+            chusheng_rect_day = chusheng_rect_day.to(torch.device("cuda:" + config.CUDNN.GPU))
+            qianfajiguang_rect = qianfajiguang_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+            youxiaoqixian_rect = youxiaoqixian_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+            images = [xingming_rect, mingzhu_rect, xingbie_rect, chusheng_rect_year, chusheng_rect_month,
+                      chusheng_rect_day, dizhi_rect, shengfengzhenghao_rect, qianfajiguang_rect, youxiaoqixian_rect]
+            # np.random.shuffle(images)
+        # for index,(images_val, indexs_val) in enumerate(dataloader_val):
+        #     pbar.update(100/len(dataloader_val))
+            idcards_error=[]
+            for i,images_val in enumerate(images):
+           # images_val = images_val.to(torch.device("cuda:" + config.CUDNN.GPU))
 
-            output_val = model(images_val)
-            sequence_len_val = output_val.shape[0]
-            target_val, input_lengths_val, target_lengths_val = label_tool.convert_ctcloss_labels(indexs_val,
-                                                                                                  labels_val,
-                                                                                                  sequence_len_val)
-            preds_val = output_val.permute(1, 0, 2).argmax(2).cpu().numpy()
-            preds_str_val= label_tool.decode_batch(preds_val)
-            correct_nums = label_tool.cal_correct_nums(preds_str_val, indexs_val, labels_val,step_val)
-            nums_all_correct += correct_nums
+                output_val = model(images_val)
+                sequence_len_val = output_val.shape[0]
+                target_val, input_lengths_val, target_lengths_val = label_tool.convert_ctcloss_labels(indexs_val,
+                                                                                                      labels_val,
+                                                                                                      sequence_len_val,i)
+
+                preds_val = output_val.permute(1, 0, 2).argmax(2).cpu().numpy()
+                preds_str_val= label_tool.decode_batch(preds_val)
+                correct_nums,idcard_error= label_tool.cal_correct_nums(preds_str_val, indexs_val, labels_val,step_val,i)
+                idcards_error.extend(idcard_error)
+
+                #print('nums_all_correct{},nums_all{}'.format(nums_all_correct, nums_all))
+                loss_val = criterion(output_val, target_val, input_lengths_val, target_lengths_val)
+                loss_all_val += loss_val
+                step_val += 1
+            nums_error=len(set(idcards_error))
+            nums_correct=output_val.shape[1]-nums_error
+            nums_all_correct += nums_correct
             nums_all += output_val.shape[1]
-            #print('nums_all_correct{},nums_all{}'.format(nums_all_correct, nums_all))
 
-            loss_val = criterion(output_val, target_val, input_lengths_val, target_lengths_val)
-            loss_all_val += loss_val
-            step_val += 1
     pbar.close()
     acc = nums_all_correct / nums_all
     torch.save(

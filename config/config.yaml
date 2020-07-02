@@ -10,7 +10,7 @@ DATASET:
   LABELS_FILE: {'TRAIN': 'datasets/labels/generate_labels_train.csv',
                 'VAL': 'datasets/labels/generate_labels_val.csv'}
 TRAIN:
-  EPOCH: 40
+  EPOCH: 300
   BATCH: 32
   SHUFFLE: True
   WORKERS: 0
