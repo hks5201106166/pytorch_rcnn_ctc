@@ -135,6 +135,7 @@ class LabelTool(object):
         idcard_error=[]
         for index,label_name in enumerate(labels_str):
             label_ground_true=labels[label_name]
+            tt=label_ground_true[i]
             if pred_strs[index]==label_ground_true[i]:
                 correct_nums+=1
             else:
@@ -242,7 +243,7 @@ def train_one_epoch(epoch,dataloader_train,config,model,label_tool, labels_train
         xingbie_rect=xingbie_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
         mingzhu_rect=mingzhu_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
         shengfengzhenghao_rect=shengfengzhenghao_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
-        chusheng_rect_year=shengfengzhenghao_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+        chusheng_rect_year=chusheng_rect_year.to(torch.device("cuda:" + config.CUDNN.GPU))
         chusheng_rect_month=chusheng_rect_month.to(torch.device("cuda:" + config.CUDNN.GPU))
         chusheng_rect_day=chusheng_rect_day.to(torch.device("cuda:" + config.CUDNN.GPU))
         qianfajiguang_rect=qianfajiguang_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
@@ -314,7 +315,7 @@ def validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,s
             xingbie_rect = xingbie_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
             mingzhu_rect = mingzhu_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
             shengfengzhenghao_rect = shengfengzhenghao_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
-            chusheng_rect_year = shengfengzhenghao_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+            chusheng_rect_year = chusheng_rect_year.to(torch.device("cuda:" + config.CUDNN.GPU))
             chusheng_rect_month = chusheng_rect_month.to(torch.device("cuda:" + config.CUDNN.GPU))
             chusheng_rect_day = chusheng_rect_day.to(torch.device("cuda:" + config.CUDNN.GPU))
             qianfajiguang_rect = qianfajiguang_rect.to(torch.device("cuda:" + config.CUDNN.GPU))

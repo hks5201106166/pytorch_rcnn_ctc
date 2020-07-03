@@ -70,7 +70,7 @@ class MobileNetV2(nn.Module):
         # building first layer
         input_channel = int(input_channel * width_mult)
         self.last_channel = int(last_channel * max(1.0, width_mult))
-        features = [ConvBNReLU(3, input_channel, stride=2)]
+        features = [ConvBNReLU(1, input_channel, stride=2)]
         # building inverted residual blocks
         for layer_index,(t, c, n, s) in enumerate(inverted_residual_setting):
             output_channel = int(c * width_mult)
