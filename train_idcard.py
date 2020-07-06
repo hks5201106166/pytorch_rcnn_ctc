@@ -12,7 +12,7 @@ from easydict import EasyDict as edict
 import yaml
 import argparse
 import os
-from utils.tool import train_one_epoch,Avgloss,validate
+from utils.tool import train_one_epoch,Avgloss,validate,train_one_epoch_dizhi_and_xingming
 
 # h, w = img.shape
 # h_cur = h / 32
@@ -87,7 +87,7 @@ def main():
     avgloss=Avgloss()  #define the avgloss class
     for epoch in range(config.TRAIN.EPOCH):
         #train the rcnn models
-        train_one_epoch(epoch,dataloader_train,config,model,label_tool, labels_train,criterion,avgloss,optimizer,scheduler,logger)
+        train_one_epoch_dizhi_and_xingming(epoch,dataloader_train,config,model,label_tool, labels_train,criterion,avgloss,optimizer,scheduler,logger)
         #update the learn lr
         scheduler.step()
 

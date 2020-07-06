@@ -284,6 +284,122 @@ def train_one_epoch(epoch,dataloader_train,config,model,label_tool, labels_train
             logger.debug(
                 "epoch:{},step:{},loss={:.6f},loss_avarage={:.6f},lr={}".format(epoch, avgloss.step,loss_texts/len(images), avgloss.loss_all/avgloss.step,
                                                                                 scheduler.get_lr()[0]))
+def train_one_epoch_dizhi_and_xingming(epoch,dataloader_train,config,model,label_tool, labels_train,criterion,avgloss,optimizer,scheduler,logger):
+    '''
+    train the model
+    @param epoch: the epoch for train
+    @param dataloader_train: the dataloader for the train
+    @param config:
+    @param model:
+    @param label_tool:
+    @param labels_train:
+    @param criterion:
+    @param avgloss:
+    @param optimizer:
+    @param scheduler:
+    @param logger:
+    @return: none
+    '''
+    step_epoch = len(dataloader_train)
+    for ind, (xingming_rect,dizhi_rect,xingbie_rect,mingzhu_rect,shengfengzhenghao_rect,chusheng_rect_year,chusheng_rect_month,chusheng_rect_day,qianfajiguang_rect,youxiaoqixian_rect,indexs) in enumerate(dataloader_train):
+        #images = images.to(torch.device("cuda:" + config.CUDNN.GPU))
+        xingming_rect=xingming_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+        dizhi_rect=dizhi_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+
+        flag=np.random.randint(0,15)
+        if flag==0:
+            xingbie_rect=xingbie_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+            mingzhu_rect=mingzhu_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+            shengfengzhenghao_rect=shengfengzhenghao_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+            chusheng_rect_year=chusheng_rect_year.to(torch.device("cuda:" + config.CUDNN.GPU))
+            chusheng_rect_month=chusheng_rect_month.to(torch.device("cuda:" + config.CUDNN.GPU))
+            chusheng_rect_day=chusheng_rect_day.to(torch.device("cuda:" + config.CUDNN.GPU))
+            #qianfajiguang_rect=qianfajiguang_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+            youxiaoqixian_rect=youxiaoqixian_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+            qianfajiguang_rect = qianfajiguang_rect.to(torch.device("cuda:" + config.CUDNN.GPU))
+            images=[xingming_rect,mingzhu_rect,xingbie_rect,chusheng_rect_year,chusheng_rect_month,chusheng_rect_day,dizhi_rect,shengfengzhenghao_rect,qianfajiguang_rect,youxiaoqixian_rect]
+            rexts = ['xingming', 'mingzhu', 'xingbie', 'chusheng_year',
+                     'chusheng_month', 'chusheng_day', 'dizhi', 'shengfengzhenghao',
+                     'qianfajiguang', 'youxiaoqixian']
+        else:
+            images = [xingming_rect, dizhi_rect]
+            rexts=['xingming','dizhi']
+            #np.random.shuffle(images)
+
+        if flag==0:
+            loss_texts = 0
+            loss_dict = {}
+            for i,image in enumerate(images):
+                output = model(image)
+                sequence_len = output.shape[0]
+                target, input_lengths, target_lengths = label_tool.convert_ctcloss_labels(indexs, labels_train,
+                                                                                          sequence_len, i)
+
+                loss = criterion(output.cpu(), target, input_lengths, target_lengths)
+                loss_texts+=loss.item()
+                loss_dict[rexts[i]]=loss.item()
+                # loss_all+=loss.cpu().detach().numpy()
+                avgloss.loss_all += loss.item()
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                avgloss.step += 1
+            # print(scheduler.get_lr())
+
+            if avgloss.step % config.TRAIN.SHOW_STEP == 0:
+                print("epoch:{},step:({}/{}),loss={:.6f},loss_avarage={:.6f},"
+                      "loss_xingming={:.6f},loss_mingzhu={:.6f},loss_xingbie={:.6f},"
+                      "loss_chusheng_year={:.6f},loss_chusheng_month={:.6f},loss_chusheng_day={:.6f},"
+                      "loss_dizhi={:.6f},loss_shengfengzhenghao={:.6f},loss_qianfajiguang={:.6f},"
+                      "loss_youxiaoqixian={:.6f},lr={}".format(epoch, avgloss.step, step_epoch, loss_texts/len(images),avgloss.loss_all / avgloss.step,
+                                                        loss_dict['xingming'],loss_dict['mingzhu'],loss_dict['xingbie'],loss_dict['chusheng_year'],
+                                                        loss_dict['chusheng_month'],loss_dict['chusheng_day'],loss_dict['dizhi'],loss_dict['shengfengzhenghao'],
+                                                        loss_dict['qianfajiguang'],loss_dict['youxiaoqixian'],
+                                                                                         scheduler.get_lr()[0]))
+        else:
+            loss_texts = 0
+            loss_dict = {}
+            for i, image in enumerate(images):
+                output = model(image)
+                sequence_len = output.shape[0]
+                if i == 0:
+                    target, input_lengths, target_lengths = label_tool.convert_ctcloss_labels(indexs, labels_train,
+                                                                                              sequence_len, 0)
+                else :
+                    target, input_lengths, target_lengths = label_tool.convert_ctcloss_labels(indexs, labels_train,
+                                                                                              sequence_len, 6)
+                # else:
+                #     target, input_lengths, target_lengths = label_tool.convert_ctcloss_labels(indexs, labels_train,
+                #                                                                               sequence_len, 8)
+                loss = criterion(output.cpu(), target, input_lengths, target_lengths)
+                loss_texts += loss.item()
+                loss_dict[rexts[i]] = loss.item()
+                # loss_all+=loss.cpu().detach().numpy()
+                avgloss.loss_all += loss.item()
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                avgloss.step += 1
+            # print(scheduler.get_lr())
+
+            if avgloss.step % config.TRAIN.SHOW_STEP == 0:
+                print("epoch:{},step:({}/{}),loss={:.6f},loss_avarage={:.6f},"
+                      "loss_xingming={:.6f},"
+                      "loss_dizhi={:.6f},"
+
+                      .format(epoch, avgloss.step, step_epoch,
+                                                               loss_texts / len(images),
+                                                               avgloss.loss_all / avgloss.step,
+                                                               loss_dict['xingming'],
+                                                               loss_dict['dizhi'],
+
+                                                               scheduler.get_lr()[0]))
+            # print(scheduler.get_lr())
+
+
+            logger.debug(
+                "epoch:{},step:{},loss={:.6f},loss_avarage={:.6f},lr={}".format(epoch, avgloss.step,loss_texts/len(images), avgloss.loss_all/avgloss.step,
+                                                                                scheduler.get_lr()[0]))
 def validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,save_outputs,logger):
     '''
     validate the model
