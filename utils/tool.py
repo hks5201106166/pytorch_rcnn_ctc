@@ -9,6 +9,8 @@ import os
 from tqdm import tqdm
 from tqdm._tqdm import trange
 import csv
+import cv2
+from collections import defaultdict
 class Avgloss():
     '''
     the average of the loss
@@ -113,7 +115,7 @@ class LabelTool(object):
             pred_strs.append(pred_str)
 
         return pred_strs
-    def cal_correct_nums(self,pred_strs,indexs,labels,step_val,i):
+    def cal_correct_nums(self,images_val,pred_strs,indexs,labels,step_val,i):
         '''
         calculate the correct nums
         @param pred_strs: the model pred_strs
@@ -122,7 +124,10 @@ class LabelTool(object):
 
         @return:
         '''
-
+        images=images_val.permute(2,3,0,1).squeeze().cpu().numpy()
+        image = np.uint8(((images[:, :,1]+1) * 0.5 * 255))
+        # cv2.imshow('ttt',image)
+        # cv2.waitKey(0)
         N = len(indexs)
        # labels = labels_train[indexs]
        # print(labels)
@@ -140,6 +145,11 @@ class LabelTool(object):
                 correct_nums+=1
             else:
                 idcard_error.append(index)
+                image = np.uint8((images[:, :, int(index)] + 1) * 0.5 * 255)
+                # print('true:{},pred:{}'.format(tt,pred_strs[index]))
+                # cv2.imwrite('/home/simple/mydemo/ocr_project/word_recogization/pytorch_rcnn_ctc/error_samples/'+'true:{},pred:{}'.format(tt,pred_strs[index])+'.jpg',image)
+                # cv2.imshow('hkt', image)
+                # cv2.waitKey(0)
         return correct_nums,idcard_error
 
     def get_labels(self,labels_path):
@@ -420,6 +430,12 @@ def validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,s
     nums_all = 0
     nums_all_correct = 0
     pbar = tqdm(total=100)
+    correct_rate_dict={}
+    rexts = ['xingming', 'mingzhu', 'xingbie', 'chusheng_year',
+             'chusheng_month', 'chusheng_day', 'dizhi', 'shengfengzhenghao',
+             'qianfajiguang', 'youxiaoqixian']
+    for rext in rexts:
+        correct_rate_dict[rext]=0
     with torch.no_grad():
         for i, (xingming_rect, dizhi_rect, xingbie_rect, mingzhu_rect, shengfengzhenghao_rect, chusheng_rect_year,
                 chusheng_rect_month, chusheng_rect_day, qianfajiguang_rect, youxiaoqixian_rect, indexs_val) in enumerate(
@@ -453,8 +469,9 @@ def validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,s
 
                 preds_val = output_val.permute(1, 0, 2).argmax(2).cpu().numpy()
                 preds_str_val= label_tool.decode_batch(preds_val)
-                correct_nums,idcard_error= label_tool.cal_correct_nums(preds_str_val, indexs_val, labels_val,step_val,i)
+                correct_nums,idcard_error= label_tool.cal_correct_nums(images_val,preds_str_val, indexs_val, labels_val,step_val,i)
                 idcards_error.extend(idcard_error)
+                correct_rate_dict[rexts[i]]+=len(idcard_error)
 
                 #print('nums_all_correct{},nums_all{}'.format(nums_all_correct, nums_all))
                 loss_val = criterion(output_val, target_val, input_lengths_val, target_lengths_val)
@@ -467,6 +484,8 @@ def validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,s
 
     pbar.close()
     acc = nums_all_correct / nums_all
+    for key,value in correct_rate_dict.items():
+        print('the {} acc:{}'.format(key,(nums_all-value)/nums_all))
     torch.save(
         {
             "state_dict": model.state_dict(),

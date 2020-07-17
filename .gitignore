@@ -1,6 +1,7 @@
 /datasets/labels/train.txt
 /.idea/
 /save_outputs/
+/error_samples/
 /config/
 # Byte-compiled / optimized / DLL files
 __pycache__/
