@@ -485,7 +485,7 @@ def validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,s
     pbar.close()
     acc = nums_all_correct / nums_all
     for key,value in correct_rate_dict.items():
-        print('the {} acc:{}'.format(key,(nums_all-value)/nums_all))
+        print('the {} acc:{}({}/{})'.format(key,(nums_all-value)/nums_all,value,nums_all))
     torch.save(
         {
             "state_dict": model.state_dict(),
