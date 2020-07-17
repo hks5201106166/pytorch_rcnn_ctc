@@ -35,6 +35,8 @@ class CRNN(nn.Module):
         self.embeding=nn.Linear(config.MODEL.LSTM_NUM_HIDDEN*2,self.nclass)
     def forward(self, x):
         output=self.cnn(x)
+        # if len(output.shape)==2:
+        #     output=output.unsqueeze(dim=0)
         output=output.permute(2,0,1)
         output,_=self.rnn(output)
         T,B,N=output.shape
