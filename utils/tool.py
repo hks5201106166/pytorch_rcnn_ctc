@@ -135,7 +135,7 @@ class LabelTool(object):
         idcard_error=[]
         for index,label_name in enumerate(labels_str):
             label_ground_true=labels[label_name]
-            tt=label_ground_true[i]
+            # tt=label_ground_true[i]
             if pred_strs[index]==label_ground_true[i]:
                 correct_nums+=1
             else:
