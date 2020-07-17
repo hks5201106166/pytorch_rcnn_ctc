@@ -74,7 +74,7 @@ def main():
     label_tool = LabelTool(char_std_path=config.DATASET.CHAR_FILE)
 
     images_train,labels_train=label_tool.get_idcard_labels(labels_path=config.DATASET.LABELS_FILE.TRAIN)
-    images_val,labels_val=label_tool.get_idcard_labels(labels_path=config.DATASET.LABELS_FILE.TRAIN)
+    images_val,labels_val=label_tool.get_idcard_labels(labels_path=config.DATASET.LABELS_FILE.VAL)
 
     #define the train and val dataset
     dataset_train=Dataset_OCR(images_root_dir=config.DATASET.IMAGE_ROOT,images_name=images_train,config=config,transform=transform_train)
@@ -87,9 +87,9 @@ def main():
     avgloss=Avgloss()  #define the avgloss class
     for epoch in range(config.TRAIN.EPOCH):
         #train the rcnn models
-        train_one_epoch_dizhi_and_xingming(epoch,dataloader_train,config,model,label_tool, labels_train,criterion,avgloss,optimizer,scheduler,logger)
+        # train_one_epoch_dizhi_and_xingming(epoch,dataloader_train,config,model,label_tool, labels_train,criterion,avgloss,optimizer,scheduler,logger)
         #update the learn lr
-        scheduler.step()
+        # scheduler.step()
 
         #validate the rcnn models
         # print('validate the model,please hold on:')
