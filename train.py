@@ -64,7 +64,7 @@ def main():
 
     #get the train and val lables from the train.txt and test.txt
     label_tool = LabelTool(char_std_path=config.DATASET.CHAR_FILE)
-    images_train,labels_train=label_tool.get_labels(labels_path=config.DATASET.LABELS_FILE.VAL)
+    images_train,labels_train=label_tool.get_labels(labels_path=config.DATASET.LABELS_FILE.TRAIN)
     images_val,labels_val=label_tool.get_labels(labels_path=config.DATASET.LABELS_FILE.VAL)
 
     #define the train and val dataset
