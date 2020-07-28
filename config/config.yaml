@@ -5,28 +5,28 @@ DATASET:
     ORI: 280
     H: 32
     W: 280   # resized width: 160
-  IMAGE_ROOT: "/home/ubuntu/hks/ocr/360wan_data/images"
+  IMAGE_ROOT: "/home/ubuntu/hks/ocr/out"
   CHAR_FILE: '/home/ubuntu/hks/ocr/pytorch_rcnn_ctc/datasets/char_map/char_std_6031.txt'
-  LABELS_FILE: {'TRAIN': 'datasets/labels/train.txt',
-              'VAL': 'datasets/labels/test.txt'}
+  LABELS_FILE: {'TRAIN': 'datasets/labels/labels_570w',
+              'VAL': 'datasets/labels/val.txt'}
 TRAIN:
   EPOCH: 15
-  BATCH: 64
+  BATCH: 8
   SHUFFLE: True
   WORKERS: 4
   RESUME:
-    IS_RESUME: False
-    MODEL_SAVE:
+    IS_RESUME: True
+    MODEL_SAVE: '/home/ubuntu/hks/ocr/pytorch_rcnn_ctc/save_outputs/2020-07-26 03:02:28_resnet18_lstm-layer:2_lstm-hidden-nums:256/models_saved/epoch_5_acc_0.9954.pth'
   OPTIMIZER: 'adam'
   LR: 0.0001
   LR_STEP: [5, 10]
   LR_FACTOR: 0.1
-  SHOW_STEP: 20
+  SHOW_STEP: 5
 
 TEST:
-  BATCH: 32
+  BATCH: 1
   SHUFFLE: False
-  WORKERS: 8
+  WORKERS: 0
 MODEL:
   NAME: 'crnn_ctc'
   BACKBONE: 'resnet18'#['resnet18','resnet34','resnet50','resnet101','resnet152','densenet','mobilenet_v2','mobileNet_v3_Large','mobileNet_v3_Small']

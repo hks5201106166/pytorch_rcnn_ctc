@@ -15,7 +15,7 @@ d={}
 file_writers=[]
 for i in range(1,20):
     d[str(i)]=[]
-    file_writers.append(open('/home/ubuntu/hks/ocr/pytorch_rcnn_ctc/datasets/labels/'+str(i)+'.txt','w'))
+    file_writers.append(open('/home/ubuntu/hks/ocr/pytorch_rcnn_ctc/datasets/labels/labels_570w/'+str(i)+'.txt','w'))
 
 labels_str=''
 for index,label_ in enumerate(file):
@@ -27,4 +27,4 @@ for index,label_ in enumerate(file):
 for i in range(1,20):
     file_writers[i-1].writelines(d[str(i)])
 conuter=collections.Counter(labels_str)
-pass
+# pass
