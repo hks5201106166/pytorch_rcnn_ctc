@@ -1,4 +1,5 @@
 /datasets/labels/train.txt
+/datasets/labels/
 /.idea/
 /save_outputs/
 /config/
