@@ -115,7 +115,7 @@ class LabelTool(object):
             pred_strs.append(pred_str)
 
         return pred_strs
-    def cal_correct_nums(self,images_val,pred_strs,indexs,labels,step_val,i):
+    def cal_correct_nums(self,images_val,pred_strs,indexs):
         '''
         calculate the correct nums
         @param pred_strs: the model pred_strs
@@ -124,8 +124,8 @@ class LabelTool(object):
 
         @return:
         '''
-        images=images_val.permute(2,3,0,1).squeeze().cpu().numpy()
-        image = np.uint8(((images[:, :,1]+1) * 0.5 * 255))
+        # images=images_val.permute(2,3,0,1).squeeze().cpu().numpy()
+        # image = np.uint8(((images[:, :,1]+1) * 0.5 * 255))
         # cv2.imshow('ttt',image)
         # cv2.waitKey(0)
         N = len(indexs)
@@ -239,7 +239,8 @@ class LabelTool(object):
             target_lengths.append(len_label)
             if len_label==0:
                 print('labels is lenght zeros')
-                break
+                print(label)
+                # break
 
         labels_tensor = torch.tensor(labels_, dtype=torch.int32)
         input_lengths = torch.full(size=(N,), fill_value=sequence_len, dtype=torch.int32)
@@ -442,6 +443,7 @@ def train_one_epoch_dizhi_and_xingming(epoch,dataloader_train,config,model,label
             logger.debug(
                 "epoch:{},step:{},loss={:.6f},loss_avarage={:.6f},lr={}".format(epoch, avgloss.step,loss_texts/len(images), avgloss.loss_all/avgloss.step,
                                                                                 scheduler.get_lr()[0]))
+
 def validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,save_outputs,logger):
     '''
     validate the model
@@ -462,35 +464,31 @@ def validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,s
     nums_all = 0
     nums_all_correct = 0
     pbar = tqdm(total=100)
-    correct_rate_dict={}
-
     with torch.no_grad():
-        for i, image,label in enumerate(dataloader_val):
-                output_val = model(image)
-                sequence_len_val = output_val.shape[0]
-                target_val, input_lengths_val, target_lengths_val = label_tool.convert_ctcloss_labels(indexs_val,
-                                                                                                      labels_val,
-                                                                                                      sequence_len_val,i)
+        for index,(images_val, indexs_val) in enumerate(dataloader_val):
+            pbar.update(100/len(dataloader_val))
+            images_val = images_val.to(torch.device("cuda:" + config.CUDNN.GPU))
 
-                preds_val = output_val.permute(1, 0, 2).argmax(2).cpu().numpy()
-                preds_str_val= label_tool.decode_batch(preds_val)
-                correct_nums,idcard_error= label_tool.cal_correct_nums(images_val,preds_str_val, indexs_val, labels_val,step_val,i)
-                idcards_error.extend(idcard_error)
-                correct_rate_dict[rexts[i]]+=len(idcard_error)
-
-                #print('nums_all_correct{},nums_all{}'.format(nums_all_correct, nums_all))
-                loss_val = criterion(output_val, target_val, input_lengths_val, target_lengths_val)
-                loss_all_val += loss_val
-                step_val += 1
-            nums_error=len(set(idcards_error))
-            nums_correct=output_val.shape[1]-nums_error
-            nums_all_correct += nums_correct
+            output_val = model(images_val)
+            sequence_len_val = output_val.shape[0]
+            target_val, input_lengths_val, target_lengths_val = label_tool.convert_ctcloss_labels(indexs_val,
+                                                                                                  sequence_len_val)
+            preds_val = output_val.permute(1, 0, 2).argmax(2).cpu().numpy()
+            preds_str_val= label_tool.decode_batch(preds_val)
+            ground_true=''.join(indexs_val[0].strip().split(' ')[1:])
+            if preds_str_val[0]==ground_true:
+                correct_nums = 1
+            else:
+                correct_nums=0
+            nums_all_correct += correct_nums
             nums_all += output_val.shape[1]
+            # print('nums_all_correct{},nums_all{}'.format(nums_all_correct, nums_all))
 
+            loss_val = criterion(output_val, target_val, input_lengths_val, target_lengths_val)
+            loss_all_val += loss_val
+            step_val += 1
     pbar.close()
     acc = nums_all_correct / nums_all
-    for key,value in correct_rate_dict.items():
-        print('the {} acc:{}({}/{})'.format(key,(nums_all-value)/nums_all,value,nums_all))
     torch.save(
         {
             "state_dict": model.state_dict(),
@@ -504,6 +502,7 @@ def validate(epoch,dataloader_val,labels_val,config,model,label_tool,criterion,s
     print('......................................................................................')
     logger.debug("epoch:{},val_loss_avarage={},val_accuracy={}".format(epoch, loss_all_val / step_val,
                                                                        nums_all_correct / nums_all))
+
 
 
 

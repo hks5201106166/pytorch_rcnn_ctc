@@ -78,9 +78,9 @@ def main():
     avgloss=Avgloss()  #define the avgloss class
     for epoch in range(config.TRAIN.EPOCH):
         #train the rcnn models
-        train_one_epoch(epoch,dataloader_train,config,model,label_tool, labels_train,criterion,avgloss,optimizer,scheduler,logger)
+        # train_one_epoch(epoch,dataloader_train,config,model,label_tool, labels_train,criterion,avgloss,optimizer,scheduler,logger)
         #update the learn lr
-        scheduler.step()
+        # scheduler.step()
 
         #validate the rcnn models
         print('validate the model,please hold on:')

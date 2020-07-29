@@ -24,7 +24,7 @@ class Dataset_OCR(Dataset):
         self.images_root_dir = images_root_dir
         self.transform = transform
         self.config = config
-        self.labels_train = labels
+        self.labels = labels
         self.seq = iaa.Sequential([
             iaa.OneOf([
                 iaa.GaussianBlur((0, 2.0)),  # blur images with a sigma between 0 and 3.0
@@ -36,13 +36,14 @@ class Dataset_OCR(Dataset):
         the len of the dataset
         @return:
         '''
-        return len(self.images_name)
+        return len(self.labels)
     def image_resize(self,img):
-
+        img = self.seq(image=img)
+        img = cv2.cvtColor(img, code=cv2.COLOR_RGB2GRAY)
         h, w = img.shape
         h_cur = h / 32
         w_cvt1 = w / h_cur
-        w_cur = 280 / 160
+        w_cur = 280 / 280
         w_cvt2 = int(w_cvt1 / w_cur)
         img = cv2.resize(img, dsize=(w_cvt2, 32), interpolation=2)
         img = np.reshape(img, (self.config.DATASET.IMAGE_SIZE.H, w_cvt2, 1))
@@ -55,15 +56,12 @@ class Dataset_OCR(Dataset):
         #img = img.view(1, *img.size())
         return img
     def __getitem__(self, index):
+        label=self.labels[index]
+        image_name = label.split(' ')[0]
+        image = cv2.imread(os.path.join(self.images_root_dir, image_name))
+        image = self.image_resize(image)
 
-
-       # cv2.imshow('dizhi_rect', dizhi_rect)
-       # cv2.waitKey(0)
-
-
-        # if self.transform:
-        #     img = self.transform(img)  # transform the image
-        return None
+        return image,label
 class Dataset_OCR_Train(Dataset):
     '''
     define the dataset for rcnn models
