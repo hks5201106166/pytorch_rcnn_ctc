@@ -15,7 +15,7 @@ TRAIN:
   SHUFFLE: True
   WORKERS: 4
   RESUME:
-    IS_RESUME: Ture
+    IS_RESUME: False
     MODEL_SAVE: '/home/ubuntu/hks/ocr/pytorch_rcnn_ctc/save_outputs/2020-07-26 03:02:28_resnet18_lstm-layer:2_lstm-hidden-nums:256/models_saved/epoch_5_acc_0.9954.pth'
   OPTIMIZER: 'adam'
   LR: 0.0001
