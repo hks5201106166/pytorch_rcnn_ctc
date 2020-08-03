@@ -1,3 +1,5 @@
+/datasets/labels/
+/datasets/char_map/
 /datasets/labels/labels_570w/train.txt
 /.idea/
 /save_outputs/
